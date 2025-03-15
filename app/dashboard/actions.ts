@@ -20,9 +20,9 @@ export async function submitPaymentSlip(formData: FormData) {
   }
 
   // Calculate points (100 points per 1 baht)
-  const points = Math.floor(amount * 100)
+  const points = Math.floor(amount * 1)
   // Calculate bonus points (5% bonus)
-  const bonusPoints = Math.floor(points * 0.05)
+  const bonusPoints = Math.floor(points * 1)
   const totalPoints = points + bonusPoints
 
   // Convert image to base64

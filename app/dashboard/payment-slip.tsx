@@ -220,24 +220,16 @@ export default function PaymentSlipUploader() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-400">จำนวนเงิน:</p>
-                    <p className="font-medium text-white">${amount || "0.00"}</p>
+                    <p className="font-medium text-white">{amount || "0.00"} บาท</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-400">พอยท์ที่จะได้รับ:</p>
-                    <p className="font-medium text-white">{amount ? Number.parseInt(amount) * 100 : 0} พอยท์</p>
+                    <p className="font-medium text-white">{amount ? Number.parseInt(amount) : 0} พอยท์</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-400">โบนัสพอยท์:</p>
-                    <p className="font-medium text-green-400">
-                      +{amount ? Math.floor(Number.parseInt(amount) * 5) : 0} พอยท์
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-400">รวมทั้งหมด:</p>
-                    <p className="font-medium text-white">
-                      {amount ? Number.parseInt(amount) * 100 + Math.floor(Number.parseInt(amount) * 5) : 0} พอยท์
-                    </p>
-                  </div>
+                </div>
+                <div className="mt-4">
+                  <p className="text-sm text-gray-400">หมายเหตุ:</p>
+                  <p className="text-sm text-gray-300">1 บาท = 1 พอยท์</p>
                 </div>
               </div>
             </div>

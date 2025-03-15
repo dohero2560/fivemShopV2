@@ -104,13 +104,27 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     .sort({ createdAt: -1 })
     .toArray()
 
+  // Get points packages from database
+  const pointsPackagesData = await db.collection("pointsPackages")
+    .find({})
+    .sort({ points: 1 })
+    .toArray()
+
+  const pointsPackages = pointsPackagesData.length > 0 ? pointsPackagesData : [
+    { points: 100, price: 100, bonus: 0 },
+    { points: 300, price: 300, bonus: 0 },
+    { points: 500, price: 500, bonus: 0 },
+    { points: 1000, price: 1000, bonus: 0 },
+    { points: 3000, price: 3000, bonus: 0 },
+  ]
+
   // Transform payments data
   const payments = paymentsData.map(payment => ({
     id: payment._id.toString(),
     date: new Date(payment.createdAt).toLocaleDateString("th-TH"),
     transactionId: payment.transactionId,
     amount: payment.amount,
-    points: payment.points,
+    points: payment.amount, // 1 บาท = 1 พอยท์
     status: payment.status,
     note: payment.note,
     adminNote: payment.adminNote,
@@ -120,7 +134,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const orders = payments.map(payment => ({
     id: payment.id,
     date: payment.date,
-    product: `เติมพอยท์ ${payment.points} พอยท์`,
+    product: `เติมพอยท์ ${payment.amount} พอยท์`, // แสดงพอยท์เท่ากับจำนวนเงิน
     amount: payment.amount,
     status: payment.status,
   }))
@@ -128,23 +142,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const pointsTransactions = payments.map(payment => ({
     id: payment.id,
     date: payment.date,
-    description: `เติมพอยท์ ${payment.points} พอยท์`,
-    amount: payment.points,
+    description: `เติมพอยท์ ${payment.amount} พอยท์`, // แสดงพอยท์เท่ากับจำนวนเงิน
+    amount: payment.amount,
     balance: user.points,
   }))
-
-  // Get points packages from database
-  const pointsPackagesData = await db.collection("pointsPackages")
-    .find({})
-    .sort({ points: 1 })
-    .toArray()
-
-  const pointsPackages = pointsPackagesData.length > 0 ? pointsPackagesData : [
-    { points: 500, price: 100, bonus: 0 },
-    { points: 1000, price: 200, bonus: 50 },
-    { points: 2500, price: 500, bonus: 250 },
-    { points: 5000, price: 1000, bonus: 750 },
-  ]
 
   return (
     <DashboardClient 
