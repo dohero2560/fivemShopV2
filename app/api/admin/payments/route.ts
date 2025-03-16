@@ -46,7 +46,8 @@ export async function GET() {
             method: 1,
             status: 1,
             createdAt: 1,
-            slipImage: 1
+            slipImage: 1,
+            paymentMethod: 1
           }
         },
         {

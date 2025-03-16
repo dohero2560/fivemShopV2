@@ -14,8 +14,9 @@ export async function submitPaymentSlip(formData: FormData) {
   const amount = Number.parseFloat(formData.get("amount") as string)
   const note = formData.get("note") as string
   const slipImage = formData.get("slipImage") as File
+  const paymentMethod = formData.get("paymentMethod") as string
 
-  if (!transactionId || !amount || amount <= 0 || !slipImage) {
+  if (!transactionId || !amount || amount <= 0 || !slipImage || !paymentMethod) {
     throw new Error("กรุณากรอกข้อมูลให้ครบถ้วน")
   }
 
@@ -40,13 +41,15 @@ export async function submitPaymentSlip(formData: FormData) {
     transactionId,
     note,
     slipImage: base64Image,
+    paymentMethod,
     status: "PENDING",
     createdAt: new Date(),
     updatedAt: new Date()
   })
 
+  // Only revalidate the path, don't redirect
   revalidatePath("/dashboard")
-  redirect("/dashboard?tab=points")
+  return { success: true }
 }
 
 // Update server IP

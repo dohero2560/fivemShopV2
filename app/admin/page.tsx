@@ -94,6 +94,7 @@ interface Payment {
   status: string
   createdAt: string
   slipImage?: string
+  paymentMethod: string
 }
 
 export default function AdminDashboardPage() {
@@ -735,7 +736,7 @@ export default function AdminDashboardPage() {
                             <TableHead className="text-gray-400">รหัสการชำระเงิน</TableHead>
                             <TableHead className="text-gray-400">ผู้ชำระเงิน</TableHead>
                             <TableHead className="text-gray-400">จำนวนเงิน</TableHead>
-                            <TableHead className="text-gray-400">ช่องทาง</TableHead>
+                            <TableHead className="text-gray-400">ช่องทางชำระเงิน</TableHead>
                             <TableHead className="text-gray-400">สลิป</TableHead>
                             <TableHead className="text-gray-400">สถานะ</TableHead>
                             <TableHead className="text-gray-400">วันที่</TableHead>
@@ -749,14 +750,14 @@ export default function AdminDashboardPage() {
                               <TableCell className="text-white">{payment.userName}</TableCell>
                               <TableCell className="text-white">฿{payment.amount.toLocaleString()}</TableCell>
                               <TableCell>
-                                <Badge className={
-                                  payment.method === "bank" ? "bg-blue-600" :
-                                  payment.method === "promptpay" ? "bg-purple-600" :
-                                  "bg-orange-600"
+                                <Badge variant={
+                                  payment.paymentMethod === 'bank' ? 'default' :
+                                  payment.paymentMethod === 'qr-bank' ? 'secondary' :
+                                  payment.paymentMethod === 'truemoney' ? 'outline' : 'default'
                                 }>
-                                  {payment.method === "bank" ? "โอนผ่านธนาคาร" :
-                                   payment.method === "promptpay" ? "พร้อมเพย์" :
-                                   "ทรูมันนี่"}
+                                  {payment.paymentMethod === 'bank' && 'โอนผ่านธนาคาร'}
+                                  {payment.paymentMethod === 'qr-bank' && 'พร้อมเพย์'}
+                                  {payment.paymentMethod === 'truemoney' && 'TrueMoney Wallet'}
                                 </Badge>
                               </TableCell>
                               <TableCell>

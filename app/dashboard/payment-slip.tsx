@@ -15,11 +15,16 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 
-export default function PaymentSlipUploader() {
+export interface PaymentSlipUploaderProps {
+  amount: number
+  paymentMethod: string
+  onSuccess?: () => void
+}
+
+export default function PaymentSlipUploader({ amount, paymentMethod, onSuccess }: PaymentSlipUploaderProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [transactionId, setTransactionId] = useState("")
-  const [amount, setAmount] = useState("")
   const [note, setNote] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -47,29 +52,32 @@ export default function PaymentSlipUploader() {
     try {
       const formData = new FormData()
       formData.append("transactionId", transactionId)
-      formData.append("amount", amount)
+      formData.append("amount", amount.toString())
       formData.append("note", note)
+      formData.append("paymentMethod", paymentMethod)
       if (selectedFile) {
         formData.append("slipImage", selectedFile)
       }
 
-      await submitPaymentSlip(formData)
+      const result = await submitPaymentSlip(formData)
 
-      setIsSubmitted(true)
-      toast({
-        title: "ส่งหลักฐานการชำระเงินสำเร็จ",
-        description: "ทีมงานจะตรวจสอบและดำเนินการภายใน 24 ชั่วโมง",
-      })
+      if (result?.success) {
+        toast({
+          title: "ส่งหลักฐานการชำระเงินสำเร็จ",
+          description: "ทีมงานจะตรวจสอบและดำเนินการภายใน 24 ชั่วโมง",
+        })
 
-      // Reset form after successful submission
-      setTimeout(() => {
+        // Reset form
         setSelectedFile(null)
         setPreviewUrl(null)
         setTransactionId("")
-        setAmount("")
         setNote("")
-        setIsSubmitted(false)
-      }, 5000)
+        
+        // Call onSuccess callback
+        if (onSuccess) {
+          onSuccess()
+        }
+      }
     } catch (error) {
       toast({
         title: "เกิดข้อผิดพลาด",
@@ -85,7 +93,6 @@ export default function PaymentSlipUploader() {
     setSelectedFile(null)
     setPreviewUrl(null)
     setTransactionId("")
-    setAmount("")
     setNote("")
   }
 
@@ -187,32 +194,17 @@ export default function PaymentSlipUploader() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="amount" className="text-white">
-                    จำนวนเงินที่โอน
+                  <Label htmlFor="note" className="text-white">
+                    หมายเหตุ (ถ้ามี)
                   </Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    placeholder="ระบุจำนวนเงิน"
-                    className="bg-gray-900 border-gray-700 text-white focus-visible:ring-blue-600"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    required
+                  <Textarea
+                    id="note"
+                    placeholder="ระบุรายละเอียดเพิ่มเติม เช่น ธนาคารที่โอน เวลาที่โอน"
+                    className="bg-gray-900 border-gray-700 text-white focus-visible:ring-blue-600 min-h-[100px]"
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
                   />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="note" className="text-white">
-                  หมายเหตุ (ถ้ามี)
-                </Label>
-                <Textarea
-                  id="note"
-                  placeholder="ระบุรายละเอียดเพิ่มเติม เช่น ธนาคารที่โอน เวลาที่โอน"
-                  className="bg-gray-900 border-gray-700 text-white focus-visible:ring-blue-600 min-h-[100px]"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                />
               </div>
 
               <div className="bg-blue-900/20 p-4 rounded-md">
@@ -220,11 +212,11 @@ export default function PaymentSlipUploader() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-400">จำนวนเงิน:</p>
-                    <p className="font-medium text-white">{amount || "0.00"} บาท</p>
+                    <p className="font-medium text-white">{amount.toString()} บาท</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-400">พอยท์ที่จะได้รับ:</p>
-                    <p className="font-medium text-white">{amount ? Number.parseInt(amount) : 0} พอยท์</p>
+                    <p className="font-medium text-white">{amount} พอยท์</p>
                   </div>
                 </div>
                 <div className="mt-4">

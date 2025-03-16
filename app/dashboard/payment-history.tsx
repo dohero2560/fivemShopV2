@@ -20,6 +20,7 @@ interface Payment {
   note?: string
   adminNote?: string
   slipImage?: string
+  paymentMethod: string
 }
 
 interface PaymentHistoryProps {
@@ -50,6 +51,7 @@ export default function PaymentHistory({ payments }: PaymentHistoryProps) {
               <TableHead className="text-gray-400">รหัสธุรกรรม</TableHead>
               <TableHead className="text-gray-400 text-right">จำนวนเงิน</TableHead>
               <TableHead className="text-gray-400 text-right">พอยท์</TableHead>
+              <TableHead className="text-gray-400 text-right">ช่องทาง</TableHead>
               <TableHead className="text-gray-400 text-right">สถานะ</TableHead>
               <TableHead className="text-gray-400 text-right">การดำเนินการ</TableHead>
             </TableRow>
@@ -62,6 +64,11 @@ export default function PaymentHistory({ payments }: PaymentHistoryProps) {
                 <TableCell className="text-gray-400">{payment.transactionId}</TableCell>
                 <TableCell className="text-white text-right">${payment.amount}</TableCell>
                 <TableCell className="text-white text-right">{payment.points}</TableCell>
+                <TableCell className="text-gray-400">
+                  {payment.paymentMethod === 'bank' && 'โอนผ่านธนาคาร'}
+                  {payment.paymentMethod === 'qr-bank' && 'พร้อมเพย์'}
+                  {payment.paymentMethod === 'truemoney' && 'TrueMoney Wallet'}
+                </TableCell>
                 <TableCell className="text-right">
                   <Badge
                     className={

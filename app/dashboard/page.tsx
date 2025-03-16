@@ -128,24 +128,38 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     status: payment.status,
     note: payment.note,
     adminNote: payment.adminNote,
-    slipImage: payment.slipImage
+    slipImage: payment.slipImage,
+    paymentMethod: payment.paymentMethod
   }))
 
-  // Transform payments into orders
+  // Transform payments into orders (การซื้อล่าสุด)
   const orders = payments.map(payment => ({
     id: payment.id,
     date: payment.date,
-    product: `เติมพอยท์ ${payment.amount} พอยท์`, // แสดงพอยท์เท่ากับจำนวนเงิน
+    product: `เติมเงิน ${payment.amount} บาท`,
     amount: payment.amount,
-    status: payment.status,
+    status: payment.status === "PENDING" ? "รอดำเนินการ" 
+           : payment.status === "COMPLETED" ? "สำเร็จ"
+           : payment.status === "REJECTED" ? "ยกเลิก"
+           : payment.status
   }))
 
+  // Transform into points transactions (การทำรายการพอยท์)
   const pointsTransactions = payments.map(payment => ({
     id: payment.id,
     date: payment.date,
-    description: `เติมพอยท์ ${payment.amount} พอยท์`, // แสดงพอยท์เท่ากับจำนวนเงิน
-    amount: payment.amount,
-    balance: user.points,
+    description: payment.status === "COMPLETED" 
+      ? `เติมพอยท์สำเร็จ +${payment.points} พอยท์`
+      : payment.status === "PENDING"
+      ? `รอตรวจสอบการเติม ${payment.points} พอยท์`
+      : `ยกเลิกการเติม ${payment.points} พอยท์`,
+    amount: payment.points,
+    type: payment.status === "COMPLETED" ? "เพิ่ม" : "รอดำเนินการ",
+    status: payment.status === "PENDING" ? "รอดำเนินการ" 
+            : payment.status === "COMPLETED" ? "สำเร็จ"
+            : payment.status === "REJECTED" ? "ยกเลิก"
+            : payment.status,
+    balance: user.points
   }))
 
   return (

@@ -23,7 +23,9 @@ export async function GET(request: NextRequest) {
         adminNote: 1,
         status: 1,
         slipImage: 1,
-        createdAt: 1
+        paymentMethod: 1,
+        createdAt: 1,
+        updatedAt: 1
       })
       .sort({ createdAt: -1 })
       .toArray()
@@ -38,7 +40,10 @@ export async function GET(request: NextRequest) {
       status: payment.status,
       note: payment.note,
       adminNote: payment.adminNote,
-      slipImage: payment.slipImage
+      slipImage: payment.slipImage,
+      paymentMethod: payment.paymentMethod,
+      createdAt: payment.createdAt,
+      updatedAt: payment.updatedAt
     }))
 
     return NextResponse.json(formattedPayments)
@@ -58,6 +63,7 @@ export async function POST(request: NextRequest) {
     const slipImage = formData.get("slipImage") as File
     const transactionId = formData.get("transactionId") as string
     const note = formData.get("note") as string
+    const paymentMethod = formData.get("paymentMethod") as string
     
     if (!amount || !slipImage) {
       return NextResponse.json({ error: "กรุณากรอกข้อมูลให้ครบถ้วน" }, { status: 400 })
@@ -82,6 +88,7 @@ export async function POST(request: NextRequest) {
       note,
       status: "PENDING",
       slipImage: base64Image,
+      paymentMethod,
       createdAt: new Date(),
       updatedAt: new Date()
     }
