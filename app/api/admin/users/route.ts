@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { authOptions } from "../../auth/[...nextauth]/route"
+import { authOptions } from "@/lib/auth/options"
 import clientPromise from "@/lib/mongodb"
 
-// GET /api/admin/users - Get all users
-export async function GET() {
+// GET /api/admin/users - Get all users (admin only)
+export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions)
     
@@ -18,11 +18,46 @@ export async function GET() {
 
     const client = await clientPromise
     const db = client.db()
-    
-    const users = await db.collection("users")
-      .find({})
-      .sort({ createdAt: -1 })
-      .toArray()
+
+    // Get users with their purchase counts
+    const users = await db.collection("users").aggregate([
+      {
+        $addFields: {
+          stringId: { $toString: "$_id" }
+        }
+      },
+      {
+        $lookup: {
+          from: "purchases",
+          localField: "stringId",
+          foreignField: "userId",
+          as: "purchases"
+        }
+      },
+      {
+        $addFields: {
+          purchasedScripts: { $size: "$purchases" },
+          createdAt: { 
+            $dateToString: { 
+              format: "%Y-%m-%dT%H:%M:%S.%LZ",
+              date: "$createdAt",
+              onNull: new Date()
+            } 
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          email: 1,
+          points: 1,
+          role: 1,
+          createdAt: 1,
+          purchasedScripts: 1
+        }
+      }
+    ]).toArray()
 
     return NextResponse.json(users)
   } catch (error) {

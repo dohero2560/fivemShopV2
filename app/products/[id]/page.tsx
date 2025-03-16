@@ -1,6 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowLeft, Check, Download, Star, Wallet, Shield } from "lucide-react"
+import { ArrowLeft, Check, Download, Star, Wallet, Shield, Package } from "lucide-react"
 import { notFound } from "next/navigation"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
@@ -11,6 +11,15 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Card } from "@/components/ui/card"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface PageProps {
   params: Promise<{ id: string }> | { id: string }
@@ -49,6 +58,13 @@ export default async function ProductDetailPage({ params }: PageProps) {
     })
     hasPurchased = !!purchase
   }
+
+  // Get available versions
+  const versions = script.versions || [{
+    version: script.version || "1.0.0",
+    downloadUrl: script.downloadUrl,
+    releaseNotes: "Initial release"
+  }]
 
   return (
     <div className="flex flex-col min-h-screen bg-black">

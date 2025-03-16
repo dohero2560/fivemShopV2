@@ -20,6 +20,7 @@ import * as z from "zod"
 import { toast } from "@/components/ui/use-toast"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import DownloadVersionDialog from "./components/download-version-dialog"
 
 interface User {
   id: string
@@ -43,6 +44,12 @@ interface Script {
   lastActive: string | null
   resourceName: string
   scriptId: string
+  versions?: {
+    version: string
+    downloadUrl: string
+    releaseNotes?: string
+    createdAt?: Date
+  }[]
 }
 
 interface ServerIp {
@@ -172,8 +179,8 @@ const PaymentMethodDialog = ({
               <div className="mt-4 p-4 bg-gray-900 rounded-lg">
                 <p className="text-sm text-gray-300 space-y-1">
                   <span className="block">ธนาคาร: กสิกรไทย</span>
-                  <span className="block">เลขบัญชี: xxx-x-xxxxx-x</span>
-                  <span className="block">ชื่อบัญชี: John Doe</span>
+                  <span className="block">เลขบัญชี: 0303741682</span>
+                  <span className="block">ชื่อบัญชี: ธนกฤต สิทธิศร</span>
                 </p>
               </div>
             )}
@@ -335,6 +342,7 @@ export default function DashboardClient({
   const [activeTab, setActiveTab] = useState(tab || "overview")
   const [selectedScript, setSelectedScript] = useState<Script | null>(null)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isDownloadOpen, setIsDownloadOpen] = useState(false)
   const [amount, setAmount] = useState<number>(0)
   const [isPaymentMethodOpen, setIsPaymentMethodOpen] = useState(false)
   const [isUploadOpen, setIsUploadOpen] = useState(false)
@@ -564,7 +572,7 @@ export default function DashboardClient({
                     )}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-400">วันที่ซื้อ</span>
@@ -587,29 +595,43 @@ export default function DashboardClient({
                       </div>
                     )}
                   </div>
+                  <div className="flex gap-2">
+                    <Button
+                      className="flex-1 bg-blue-600 hover:bg-blue-700"
+                      onClick={() => {
+                        setSelectedScript(script)
+                        setIsDownloadOpen(true)
+                      }}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      ดาวน์โหลด
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="flex-1 border-gray-600"
+                      onClick={() => {
+                        setSelectedScript(script)
+                        setIsSettingsOpen(true)
+                      }}
+                    >
+                      <Settings className="h-4 w-4 mr-2" />
+                      ตั้งค่า
+                    </Button>
+                  </div>
                 </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button variant="outline" size="sm" className="bg-transparent border-gray-600 text-gray-300 hover:bg-gray-700">
-                    <Download className="mr-2 h-4 w-4" />
-                    ดาวน์โหลด
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="bg-transparent border-gray-600 text-gray-300 hover:bg-gray-700"
-                    onClick={() => {
-                      setSelectedScript(script)
-                      setIsSettingsOpen(true)
-                      form.setValue("ipAddress", script.serverIp || "")
-                    }}
-                  >
-                    <Settings className="mr-2 h-4 w-4" />
-                    ตั้งค่า
-                  </Button>
-                </CardFooter>
               </Card>
             ))}
           </div>
+
+          <DownloadVersionDialog
+            isOpen={isDownloadOpen}
+            onClose={() => {
+              setIsDownloadOpen(false)
+              setSelectedScript(null)
+            }}
+            versions={selectedScript?.versions}
+            scriptName={selectedScript?.title || ""}
+          />
         </TabsContent>
         <TabsContent value="payment">
           <div className="grid gap-4 md:grid-cols-2">

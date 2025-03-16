@@ -23,7 +23,7 @@ import {
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -54,6 +54,7 @@ interface User {
   points: number
   role: string
   createdAt: string
+  purchasedScripts?: number
 }
 
 interface Script {
@@ -64,7 +65,12 @@ interface Script {
   category: string
   downloadUrl: string
   imageUrl?: string
+  image?: string
   createdAt: string
+  status?: "ACTIVE" | "DRAFT"
+  sales?: number
+  version?: string
+  resourceName?: string
 }
 
 interface DashboardData {
@@ -264,7 +270,7 @@ export default function AdminDashboardPage() {
 
   const filteredScripts = scripts.filter(script => 
     script.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    script.description.toLowerCase().includes(searchQuery.toLowerCase())
+    script.resourceName?.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   const filteredOrders = orders?.filter(order => 
@@ -281,25 +287,37 @@ export default function AdminDashboardPage() {
     if (!itemToDelete) return
 
     try {
-      const response = await fetch(`/api/admin/${itemToDelete.type}s/${itemToDelete.id}`, {
-        method: "DELETE",
+      const endpoint = itemToDelete.type === "user" 
+        ? `/api/admin/users/${itemToDelete.id}`
+        : `/api/admin/scripts/${itemToDelete.id}`
+
+      const response = await fetch(endpoint, {
+        method: 'DELETE',
       })
 
       if (!response.ok) {
-        throw new Error(`Failed to delete ${itemToDelete.type}`)
+        throw new Error('Failed to delete item')
       }
 
-      toast.success(`${itemToDelete.type === "user" ? "ผู้ใช้" : "สคริปต์"}ถูกลบแล้ว`)
-      
+      toast.success(
+        itemToDelete.type === "user" 
+          ? "ลบผู้ใช้เรียบร้อย" 
+          : "ลบสคริปต์เรียบร้อย"
+      )
+
       // Refresh data
       if (itemToDelete.type === "user") {
-        setUsers(users.filter(user => user._id !== itemToDelete.id))
+        const usersResponse = await fetch('/api/admin/users')
+        const usersData = await usersResponse.json()
+        setUsers(usersData)
       } else {
-        setScripts(scripts.filter(script => script._id !== itemToDelete.id))
+        const scriptsResponse = await fetch('/api/admin/scripts')
+        const scriptsData = await scriptsResponse.json()
+        setScripts(scriptsData)
       }
     } catch (error) {
-      console.error(`Error deleting ${itemToDelete.type}:`, error)
-      toast.error("เกิดข้อผิดพลาด กรุณาลองใหม่")
+      console.error('Error deleting item:', error)
+      toast.error("เกิดข้อผิดพลาดในการลบข้อมูล")
     } finally {
       setIsDeleteDialogOpen(false)
       setItemToDelete(null)
@@ -438,30 +456,30 @@ export default function AdminDashboardPage() {
                 <p className="text-xs text-gray-400">บาท</p>
                       </CardContent>
                     </Card>
-                  </div>
+            </div>
 
           <div className="mt-8">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="bg-gray-800">
-                <TabsTrigger value="overview" className="data-[state=active]:bg-blue-600">
-                  ภาพรวม
-                </TabsTrigger>
-                <TabsTrigger value="users" className="data-[state=active]:bg-blue-600">
-                  ผู้ใช้
-                </TabsTrigger>
+                  <TabsList className="bg-gray-800">
+                    <TabsTrigger value="overview" className="data-[state=active]:bg-blue-600">
+                      ภาพรวม
+                    </TabsTrigger>
+                    <TabsTrigger value="users" className="data-[state=active]:bg-blue-600">
+                      ผู้ใช้
+                    </TabsTrigger>
                 <TabsTrigger value="scripts" className="data-[state=active]:bg-blue-600">
-                  สคริปต์
-                </TabsTrigger>
-                <TabsTrigger value="orders" className="data-[state=active]:bg-blue-600">
-                  คำสั่งซื้อ
-                </TabsTrigger>
+                      สคริปต์
+                    </TabsTrigger>
+                    <TabsTrigger value="orders" className="data-[state=active]:bg-blue-600">
+                      คำสั่งซื้อ
+                    </TabsTrigger>
                 <TabsTrigger value="payments" className="data-[state=active]:bg-blue-600">
                   การชำระเงิน
                 </TabsTrigger>
                 <TabsTrigger value="reports" className="data-[state=active]:bg-blue-600">
                   รายงาน
                 </TabsTrigger>
-              </TabsList>
+                  </TabsList>
               <TabsContent value="overview" className="mt-6">
                 <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
                   <h3 className="text-lg font-medium text-white mb-4">ภาพรวมระบบ</h3>
@@ -471,23 +489,39 @@ export default function AdminDashboardPage() {
                         <p className="text-sm text-gray-400">สถานะระบบ</p>
                         <div className="flex items-center space-x-2">
                           <Badge className="bg-green-600">ระบบทำงานปกติ</Badge>
-                        </div>
-                                  </div>
+                </div>
+                          </div>
                       <div className="space-y-2">
                         <p className="text-sm text-gray-400">อัปเดตล่าสุด</p>
                         <p className="text-sm text-white">{currentTime || "กำลังโหลด..."}</p>
                         </div>
-                  </div>
-                      </div>
-                </div>
+                        </div>
+                          </div>
+                        </div>
                 </TabsContent>
 
               <TabsContent value="users" className="mt-6">
                 <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
-                  <h3 className="text-lg font-medium text-white mb-4">จัดการผู้ใช้</h3>
+                  <div className="flex justify-between items-center mb-6">
+                    <div>
+                      <h3 className="text-lg font-medium text-white">จัดการผู้ใช้</h3>
+                      <p className="text-sm text-gray-400 mt-1">จัดการข้อมูลผู้ใช้ทั้งหมดในระบบ</p>
+                          </div>
+                          <Button
+                      className="bg-blue-600 hover:bg-blue-700"
+                      onClick={() => {
+                        setSelectedUser(null)
+                        setIsUserFormOpen(true)
+                      }}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      เพิ่มผู้ใช้
+                          </Button>
+                        </div>
+
                   <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <div className="relative w-64">
+                    <div className="flex items-center gap-4">
+                      <div className="relative flex-1 max-w-sm">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
                         <input
                           type="search"
@@ -497,25 +531,28 @@ export default function AdminDashboardPage() {
                           onChange={(e) => setSearchQuery(e.target.value)}
                         />
                       </div>
-                      <Button 
-                        className="bg-blue-600 hover:bg-blue-700"
-                        onClick={() => {
-                          setSelectedUser(null)
-                          setIsUserFormOpen(true)
-                        }}
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        เพิ่มผู้ใช้
-                      </Button>
+                      <div className="flex gap-2">
+                        <Badge variant="outline" className="bg-gray-900">
+                          ทั้งหมด: {users.length}
+                        </Badge>
+                        <Badge variant="outline" className="bg-blue-900">
+                          ผู้ใช้: {users.filter(user => user.role === "USER").length}
+                        </Badge>
+                        <Badge variant="outline" className="bg-red-900">
+                          แอดมิน: {users.filter(user => user.role === "ADMIN" || user.role === "SUPER_ADMIN").length}
+                        </Badge>
                     </div>
+                  </div>
+
                     <div className="rounded-md border border-gray-700">
                       <Table>
-                        <TableHeader className="bg-gray-900">
-                          <TableRow className="border-gray-700">
-                            <TableHead className="text-gray-400">ชื่อ</TableHead>
+                        <TableHeader>
+                          <TableRow className="border-gray-700 bg-gray-900">
+                            <TableHead className="text-gray-400">ชื่อผู้ใช้</TableHead>
                             <TableHead className="text-gray-400">อีเมล</TableHead>
                             <TableHead className="text-gray-400">พอยท์</TableHead>
-                            <TableHead className="text-gray-400">ระดับ</TableHead>
+                            <TableHead className="text-gray-400">สิทธิ์</TableHead>
+                            <TableHead className="text-gray-400">สคริปต์ที่ซื้อ</TableHead>
                             <TableHead className="text-gray-400">วันที่สมัคร</TableHead>
                             <TableHead className="text-gray-400 text-right">จัดการ</TableHead>
                           </TableRow>
@@ -523,55 +560,136 @@ export default function AdminDashboardPage() {
                         <TableBody>
                           {filteredUsers.map((user) => (
                             <TableRow key={user._id} className="border-gray-700">
-                              <TableCell className="text-white">{user.name}</TableCell>
+                              <TableCell className="font-medium text-white">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center">
+                                    {user.name ? user.name[0].toUpperCase() : "U"}
+                                  </div>
+                                  {user.name}
+                                </div>
+                              </TableCell>
                               <TableCell className="text-gray-400">{user.email}</TableCell>
-                              <TableCell className="text-white">{user.points}</TableCell>
                               <TableCell>
-                                <Badge className={user.role === "ADMIN" ? "bg-red-600" : "bg-blue-600"}>
+                                <Badge variant="outline" className="bg-green-900/30">
+                                  {user.points} พอยท์
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 ml-2 text-blue-500 hover:text-blue-400"
+                                    onClick={() => {
+                                      const newPoints = window.prompt(`กรอกจำนวนพอยท์ใหม่สำหรับ ${user.name}:`, user.points.toString())
+                                      if (newPoints !== null) {
+                                        const points = parseInt(newPoints)
+                                        if (!isNaN(points)) {
+                                          fetch(`/api/admin/users/${user._id}/points`, {
+                                            method: "PATCH",
+                                            headers: {
+                                              "Content-Type": "application/json",
+                                            },
+                                            body: JSON.stringify({ points }),
+                                          })
+                                          .then(response => {
+                                            if (!response.ok) throw new Error("Failed to update points")
+                                            return response.json()
+                                          })
+                                          .then(() => {
+                                            toast.success("อัพเดทพอยท์สำเร็จ")
+                                            // Refresh users data
+                                            fetch('/api/admin/users')
+                                              .then(res => res.json())
+                                              .then(data => setUsers(data))
+                                          })
+                                          .catch(error => {
+                                            console.error("Error updating points:", error)
+                                            toast.error("เกิดข้อผิดพลาด กรุณาลองใหม่")
+                                          })
+                                        }
+                                      }
+                                    }}
+                                  >
+                                    <Settings className="h-4 w-4" />
+                                  </Button>
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <Badge className={
+                                  user.role === "SUPER_ADMIN" ? "bg-red-600" :
+                                  user.role === "ADMIN" ? "bg-yellow-600" :
+                                  "bg-blue-600"
+                                }>
                                   {user.role}
                                 </Badge>
                               </TableCell>
-                              <TableCell className="text-gray-400">
-                                {new Date(user.createdAt).toLocaleDateString('th-TH')}
+                              <TableCell>
+                                <Badge variant="outline" className="bg-gray-900">
+                                  {user.purchasedScripts || 0} สคริปต์
+                                </Badge>
                               </TableCell>
-                              <TableCell className="text-right">
+                              <TableCell className="text-gray-400">
+                                {user.createdAt ? new Date(user.createdAt).toLocaleDateString('th-TH', {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                }) : 'ไม่มีข้อมูล'}
+                              </TableCell>
+                              <TableCell>
                                 <div className="flex justify-end gap-2">
                                   <Button
                                     variant="ghost"
-                                    size="sm" 
-                                    className="text-blue-500"
+                                    size="icon"
+                                    className="h-8 w-8 text-blue-500 hover:text-blue-400"
                                     onClick={() => {
                                       setSelectedUser(user)
                                       setIsUserFormOpen(true)
                                     }}
                                   >
-                                    แก้ไข
+                                    <Settings className="h-4 w-4" />
                                   </Button>
+                                  {user.role !== "SUPER_ADMIN" && (
                                   <Button
                                     variant="ghost"
-                                    size="sm" 
-                                    className="text-red-500"
-                                    onClick={() => confirmDelete("user", user._id)}
+                                    size="icon"
+                                    className="h-8 w-8 text-red-500 hover:text-red-400"
+                                      onClick={() => confirmDelete("user", user._id)}
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
+                                  )}
                                 </div>
                               </TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
                       </Table>
-                        </div>
-                      </div>
+                    </div>
+                  </div>
                 </div>
-                </TabsContent>
+              </TabsContent>
 
               <TabsContent value="scripts" className="mt-6">
                 <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
-                  <h3 className="text-lg font-medium text-white mb-4">จัดการสคริปต์</h3>
+                  <div className="flex justify-between items-center mb-6">
+                    <div>
+                      <h3 className="text-lg font-medium text-white">จัดการสคริปต์</h3>
+                      <p className="text-sm text-gray-400 mt-1">จัดการสคริปต์ทั้งหมดในระบบ</p>
+                    </div>
+                          <Button
+                      className="bg-blue-600 hover:bg-blue-700"
+                      onClick={() => {
+                        setSelectedScript(null)
+                        setIsScriptFormOpen(true)
+                      }}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      เพิ่มสคริปต์
+                          </Button>
+                        </div>
+
                   <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <div className="relative w-64">
+                    <div className="flex items-center gap-4">
+                      <div className="relative flex-1 max-w-sm">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
                         <input
                           type="search"
@@ -581,68 +699,93 @@ export default function AdminDashboardPage() {
                           onChange={(e) => setSearchQuery(e.target.value)}
                         />
                       </div>
-                      <Button 
-                        className="bg-blue-600 hover:bg-blue-700"
-                        onClick={() => {
-                          setSelectedScript(null)
-                          setIsScriptFormOpen(true)
-                        }}
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        เพิ่มสคริปต์
-                      </Button>
+                      <div className="flex gap-2">
+                        <Badge variant="outline" className="bg-gray-900">
+                          ทั้งหมด: {scripts.length}
+                        </Badge>
+                        <Badge variant="outline" className="bg-green-900">
+                          ใช้งาน: {scripts.filter(script => script.status === "ACTIVE").length}
+                        </Badge>
+                        <Badge variant="outline" className="bg-yellow-900">
+                          ร่าง: {scripts.filter(script => script.status === "DRAFT").length}
+                        </Badge>
                     </div>
-                    <div className="rounded-md border border-gray-700">
-                      <Table>
-                        <TableHeader className="bg-gray-900">
-                          <TableRow className="border-gray-700">
-                            <TableHead className="text-gray-400">ชื่อ</TableHead>
-                            <TableHead className="text-gray-400">ราคา</TableHead>
-                            <TableHead className="text-gray-400">หมวดหมู่</TableHead>
-                            <TableHead className="text-gray-400">วันที่เพิ่ม</TableHead>
-                            <TableHead className="text-gray-400 text-right">จัดการ</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredScripts.map((script) => (
-                            <TableRow key={script._id} className="border-gray-700">
-                              <TableCell className="text-white">{script.title}</TableCell>
-                              <TableCell className="text-white">฿{(script.price || 0).toLocaleString()}</TableCell>
-                              <TableCell>
-                                <Badge className="bg-yellow-600">
-                                  {script.category}
+                  </div>
+
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                      {filteredScripts.map((script) => (
+                        <Card key={script._id} className="bg-gray-900 border-gray-700">
+                          <CardHeader className="p-4">
+                            <div className="aspect-video relative rounded-md overflow-hidden mb-4">
+                              <Image
+                                src={script.image || "/placeholder.svg"}
+                                alt={script.title}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <CardTitle className="text-white">{script.title}</CardTitle>
+                                <CardDescription className="text-gray-400 mt-1">
+                                  {script.description}
+                                </CardDescription>
+                              </div>
+                              <Badge className={
+                                script.status === "ACTIVE" ? "bg-green-600" :
+                                script.status === "DRAFT" ? "bg-yellow-600" :
+                                "bg-gray-600"
+                              }>
+                                {script.status === "ACTIVE" ? "ใช้งาน" :
+                                 script.status === "DRAFT" ? "ร่าง" : script.status}
                                 </Badge>
-                              </TableCell>
-                              <TableCell className="text-gray-400">
-                                {new Date(script.createdAt).toLocaleDateString('th-TH')}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex justify-end gap-2">
+                            </div>
+                          </CardHeader>
+                          <CardContent className="p-4 pt-0">
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-400">ราคา</span>
+                                <span className="text-white font-medium">{script.price} พอยท์</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-400">ยอดขาย</span>
+                                <span className="text-white font-medium">{script.sales || 0} ครั้ง</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-400">เวอร์ชัน</span>
+                                <span className="text-white font-medium">{script.version}</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-400">Resource Name</span>
+                                <span className="text-white font-medium">{script.resourceName}</span>
+                              </div>
+                            </div>
+                            <div className="flex justify-end gap-2 mt-4">
                                   <Button
                                     variant="ghost"
-                                    size="sm" 
-                                    className="text-blue-500"
-                                    onClick={() => {
-                                      setSelectedScript(script)
-                                      setIsScriptFormOpen(true)
-                                    }}
-                                  >
-                                    แก้ไข
+                                size="sm"
+                                className="text-blue-500 hover:text-blue-400"
+                                onClick={() => {
+                                  setSelectedScript(script)
+                                  setIsScriptFormOpen(true)
+                                }}
+                              >
+                                <Settings className="h-4 w-4 mr-1" />
+                                แก้ไข
                                   </Button>
                                   <Button
                                     variant="ghost"
-                                    size="sm" 
-                                    className="text-red-500"
-                                    onClick={() => confirmDelete("script", script._id)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
+                                size="sm"
+                                className="text-red-500 hover:text-red-400"
+                                onClick={() => confirmDelete("script", script._id)}
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                ลบ
                                   </Button>
                                 </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </CardContent>
+                        </Card>
+                      ))}
                         </div>
                       </div>
                 </div>
@@ -792,34 +935,34 @@ export default function AdminDashboardPage() {
                               <TableCell>
                                 {payment.status === "PENDING" && (
                                   <div className="flex gap-2">
-                                    <Button
-                                      variant="ghost"
+                                      <Button
+                                        variant="ghost"
                                       size="sm"
                                       className="text-green-500 hover:text-green-400"
                                       onClick={() => handlePaymentAction(payment._id, "approve")}
                                       disabled={!payment.slipImage}
                                     >
                                       ยืนยัน
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
                                       size="sm"
                                       className="text-red-500 hover:text-red-400"
                                       onClick={() => handlePaymentAction(payment._id, "reject")}
-                                    >
+                                      >
                                       ยกเลิก
-                                    </Button>
-                                  </div>
+                                      </Button>
+                                </div>
                                 )}
                               </TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
                       </Table>
-                    </div>
-                  </div>
+                        </div>
+                      </div>
                 </div>
-              </TabsContent>
+                </TabsContent>
 
               <TabsContent value="reports" className="mt-6">
                 <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
@@ -829,32 +972,32 @@ export default function AdminDashboardPage() {
                       <Card className="bg-gray-900 border-gray-700">
                         <CardHeader>
                           <CardTitle className="text-white">รายได้รายเดือน</CardTitle>
-                        </CardHeader>
+                      </CardHeader>
                         <CardContent>
                           {/* Monthly revenue chart will be added here */}
                           <div className="h-[200px] flex items-center justify-center text-gray-400">
                             กราฟแสดงรายได้รายเดือน
-                      </div>
-                    </CardContent>
-                  </Card>
+                        </div>
+                      </CardContent>
+                    </Card>
                       <Card className="bg-gray-900 border-gray-700">
                         <CardHeader>
                           <CardTitle className="text-white">สคริปต์ขายดี</CardTitle>
-                    </CardHeader>
+                      </CardHeader>
                         <CardContent>
                           {/* Top selling scripts chart will be added here */}
                           <div className="h-[200px] flex items-center justify-center text-gray-400">
                             กราฟแสดงสคริปต์ขายดี
-                      </div>
-                    </CardContent>
-                  </Card>
-                                </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
                       </div>
                   </div>
                 </TabsContent>
               </Tabs>
-          </div>
-        </div>
+                          </div>
+                          </div>
       </main>
 
       {/* Forms */}
@@ -880,13 +1023,12 @@ export default function AdminDashboardPage() {
         script={selectedScript || undefined}
         onSuccess={() => {
           setSelectedScript(null)
-          if (activeTab === "scripts") {
-            // Refresh scripts data
-            fetch('/api/admin/scripts')
-              .then(res => res.json())
-              .then(data => setScripts(data))
-              .catch(error => console.error('Error fetching scripts:', error))
-          }
+          setIsScriptFormOpen(false)
+          // Refresh scripts data
+          fetch('/api/admin/scripts')
+            .then(res => res.json())
+            .then(data => setScripts(data))
+            .catch(error => console.error('Error fetching scripts:', error))
         }}
       />
 
@@ -896,8 +1038,9 @@ export default function AdminDashboardPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>ยืนยันการลบ</AlertDialogTitle>
             <AlertDialogDescription className="text-gray-400">
-              คุณแน่ใจหรือไม่ที่จะลบ{itemToDelete?.type === "user" ? "ผู้ใช้" : "สคริปต์"}นี้? 
-              การกระทำนี้ไม่สามารถย้อนกลับได้
+              {itemToDelete?.type === "user" 
+                ? "คุณแน่ใจหรือไม่ที่จะลบผู้ใช้นี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+                : "คุณแน่ใจหรือไม่ที่จะลบสคริปต์นี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

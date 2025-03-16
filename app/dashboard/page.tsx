@@ -94,7 +94,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       resourceName: resourceName,
       serverIp: serverIpData?.ipAddress || "",
       isActive: serverIpData?.isActive || false,
-      lastActive: serverIpData?.lastActive || null
+      lastActive: serverIpData?.lastActive || null,
+      versions: purchase.script.versions || []
     }
   })
 
