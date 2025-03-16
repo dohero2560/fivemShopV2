@@ -12,7 +12,7 @@ export default function AdminHeader({ admin }: { admin: any }) {
         <div className="flex items-center gap-6 md:gap-10">
           <Link href="/admin" className="flex items-center space-x-2">
             <div className="font-bold text-2xl bg-gradient-to-r from-blue-500 to-blue-700 bg-clip-text text-transparent">
-              FiveM Scripts <span className="text-sm text-white">แอดมิน</span>
+              DooDev <span className="text-sm text-white">แอดมิน</span>
             </div>
           </Link>
           <nav className="hidden md:flex gap-6">

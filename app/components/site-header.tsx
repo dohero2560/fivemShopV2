@@ -38,7 +38,7 @@ export default function SiteHeader({ user, isDashboard }: SiteHeaderProps) {
         <div className="flex items-center gap-6 md:gap-10">
           <Link href="/" className="flex items-center space-x-2">
             <div className="font-bold text-2xl bg-gradient-to-r from-blue-500 to-blue-700 bg-clip-text text-transparent">
-              FiveM Scripts
+              DooDev
             </div>
           </Link>
           <nav className="hidden md:flex gap-6">

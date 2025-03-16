@@ -1,6 +1,6 @@
-# FiveM Scripts Shop
+# DooDev Shop
 
-A web application for selling FiveM scripts with points-based system and Discord integration.
+A web application for selling DooDev with points-based system and Discord integration.
 
 ## Features
 

@@ -131,7 +131,7 @@ export default async function Home() {
       </main>
       <footer className="w-full border-t border-gray-800 bg-black py-6">
         <div className="container flex flex-col items-center justify-center gap-4 md:flex-row md:gap-8">
-          <p className="text-center text-sm text-gray-400">&copy; {new Date().getFullYear()} FiveM Scripts สงวนลิขสิทธิ์</p>
+          <p className="text-center text-sm text-gray-400">&copy; {new Date().getFullYear()} DooDev สงวนลิขสิทธิ์</p>
           <div className="flex gap-4">
             <Link href="/terms" className="text-sm text-gray-400 hover:text-blue-500">
               เงื่อนไขการใช้งาน

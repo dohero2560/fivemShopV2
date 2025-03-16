@@ -73,7 +73,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
           <div className="flex items-center gap-6 md:gap-10">
             <Link href="/" className="flex items-center space-x-2">
               <div className="font-bold text-2xl bg-gradient-to-r from-blue-500 to-blue-700 bg-clip-text text-transparent">
-                FiveM Scripts
+                DooDev
               </div>
             </Link>
             <nav className="hidden md:flex gap-6">
@@ -307,7 +307,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
       </main>
       <footer className="w-full border-t border-gray-800 bg-black py-6">
         <div className="container flex flex-col items-center justify-center gap-4 md:flex-row md:gap-8">
-          <p className="text-center text-sm text-gray-400">&copy; {new Date().getFullYear()} FiveM Scripts สงวนลิขสิทธิ์</p>
+          <p className="text-center text-sm text-gray-400">&copy; {new Date().getFullYear()} DooDev สงวนลิขสิทธิ์</p>
           <div className="flex gap-4">
             <Link href="/terms" className="text-sm text-gray-400 hover:text-blue-500">
               เงื่อนไขการใช้งาน

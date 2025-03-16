@@ -11,7 +11,7 @@ import { headers } from "next/headers"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "FiveM Scripts",
+  title: "DooDev",
   description: "ร้านขายสคริปต์ FiveM คุณภาพสูง",
 }
 

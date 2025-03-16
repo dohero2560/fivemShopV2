@@ -25,7 +25,7 @@ export default async function AdminLayout({
       <footer className="w-full border-t border-gray-800 bg-black py-6">
         <div className="container flex flex-col items-center justify-center gap-4 md:flex-row md:gap-8">
           <p className="text-center text-sm text-gray-400">
-            &copy; {new Date().getFullYear()} FiveM Scripts สงวนลิขสิทธิ์ - แดชบอร์ดแอดมิน
+            &copy; {new Date().getFullYear()} DooDev สงวนลิขสิทธิ์ - แดชบอร์ดแอดมิน
           </p>
         </div>
       </footer>
