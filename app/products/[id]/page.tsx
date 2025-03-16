@@ -99,7 +99,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
                   <Link href="/admin">
                     <Button variant="outline" className="border-red-600 text-white hover:bg-red-900/50">
                       <Shield className="mr-2 h-4 w-4" />
-                      แอดมิน
+                      เข้าสู่หน้าผู้ดูแลระบบ
                     </Button>
                   </Link>
                 )}

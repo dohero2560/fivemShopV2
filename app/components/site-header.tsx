@@ -1,13 +1,37 @@
 "use client"
 
 import Link from "next/link"
-import { Shield } from "lucide-react"
+import Image from "next/image"
+import { Shield, User, LogOut, Settings, Wallet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { signOut, useSession } from "next-auth/react"
+import { usePathname } from "next/navigation"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
-export default function SiteHeader() {
+interface SiteHeaderProps {
+  user?: any // สำหรับหน้า dashboard
+  isDashboard?: boolean // flag สำหรับบอกว่าเป็นหน้า dashboard หรือไม่
+}
+
+export default function SiteHeader({ user, isDashboard }: SiteHeaderProps) {
   const { data: session } = useSession()
+  const pathname = usePathname()
 
+  // ไม่แสดง header ในหน้า dashboard ถ้าไม่ได้ถูกเรียกจาก dashboard layout
+  if (pathname?.startsWith('/dashboard') && !isDashboard) {
+    return null
+  }
+
+  // ใช้ข้อมูลจาก user prop ถ้าอยู่ในหน้า dashboard หรือใช้จาก session ถ้าเป็นหน้าปกติ
+  const currentUser = isDashboard ? user : session?.user
+  
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-800 bg-gray-900/95 backdrop-blur supports-[backdrop-filter]:bg-gray-900/75">
       <div className="container flex h-16 items-center justify-between">
@@ -18,48 +42,104 @@ export default function SiteHeader() {
             </div>
           </Link>
           <nav className="hidden md:flex gap-6">
-            <Link href="/" className="text-sm font-medium text-gray-400 transition-colors hover:text-blue-500">
+            <Link 
+              href="/" 
+              className={`text-sm font-medium transition-colors hover:text-blue-500 ${
+                pathname === "/" ? "text-blue-500" : "text-gray-400"
+              }`}
+            >
               หน้าหลัก
             </Link>
-            <Link href="/products" className="text-sm font-medium text-gray-400 transition-colors hover:text-blue-500">
+            <Link 
+              href="/products" 
+              className={`text-sm font-medium transition-colors hover:text-blue-500 ${
+                pathname === "/products" ? "text-blue-500" : "text-gray-400"
+              }`}
+            >
               สินค้า
             </Link>
-            {session && (
-              <Link href="/dashboard" className="text-sm font-medium text-gray-400 transition-colors hover:text-blue-500">
+            {(currentUser || isDashboard) && (
+              <Link 
+                href="/dashboard" 
+                className={`text-sm font-medium transition-colors hover:text-blue-500 ${
+                  pathname.startsWith("/dashboard") ? "text-blue-500" : "text-gray-400"
+                }`}
+              >
                 แดชบอร์ด
               </Link>
             )}
           </nav>
         </div>
         <div className="flex items-center gap-4">
-          {session ? (
+          {currentUser ? (
             <>
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600">
-                  <span className="text-sm font-medium text-white">{session.user?.name?.[0] || "U"}</span>
+              <div className="flex items-center gap-4">
+                <div className="hidden md:flex items-center bg-blue-900/30 px-3 py-1.5 rounded-full">
+                  <Wallet className="h-4 w-4 text-blue-400 mr-2" />
+                  <span className="text-blue-300 font-medium">{currentUser?.points || 0} พอยท์</span>
                 </div>
-                <div className="hidden md:block">
-                  <p className="text-sm font-medium text-white">{session.user?.name || "ผู้ใช้"}</p>
-                  <p className="text-xs text-gray-400">{(session.user as any)?.points || 0} พอยท์</p>
-                </div>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                      <div className="relative h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center ring-2 ring-gray-800 hover:ring-blue-600 transition-all">
+                        {currentUser?.image ? (
+                          <Image
+                            src={currentUser.image}
+                            alt={currentUser.name || ""}
+                            fill
+                            className="rounded-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-sm font-medium text-white">
+                            {currentUser?.name?.[0] || "U"}
+                          </span>
+                        )}
+                      </div>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end">
+                    <DropdownMenuLabel>
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium text-gray-100">{currentUser?.name}</p>
+                        <p className="text-xs text-gray-400">{currentUser?.email}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <Link href="/dashboard">
+                      <DropdownMenuItem className="cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        <span>แดชบอร์ด</span>
+                      </DropdownMenuItem>
+                    </Link>
+                    <Link href="/dashboard/settings">
+                      <DropdownMenuItem className="cursor-pointer">
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>ตั้งค่า</span>
+                      </DropdownMenuItem>
+                    </Link>
+                    {(currentUser?.role === "ADMIN" || currentUser?.role === "SUPER_ADMIN") && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <Link href="/admin">
+                          <DropdownMenuItem className="cursor-pointer text-red-500 focus:text-red-500">
+                            <Shield className="mr-2 h-4 w-4" />
+                            <span>หน้าผู้ดูแลระบบ</span>
+                          </DropdownMenuItem>
+                        </Link>
+                      </>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      className="cursor-pointer text-gray-400 focus:text-white"
+                      onClick={() => signOut({ callbackUrl: "/" })}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>ออกจากระบบ</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-
-              {((session.user as any)?.role === "ADMIN" || (session.user as any)?.role === "SUPER_ADMIN") && (
-                <Link href="/admin">
-                  <Button variant="outline" className="bg-transparent border-red-600 text-red-500 hover:bg-red-950/50">
-                    <Shield className="mr-2 h-4 w-4" />
-                    แอดมิน
-                  </Button>
-                </Link>
-              )}
-
-              <Button
-                variant="ghost"
-                className="text-gray-400 hover:text-white hover:bg-gray-800"
-                onClick={() => signOut({ callbackUrl: "/" })}
-              >
-                ออกจากระบบ
-              </Button>
             </>
           ) : (
             <Link href="/login">

@@ -128,6 +128,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     status: payment.status,
     note: payment.note,
     adminNote: payment.adminNote,
+    slipImage: payment.slipImage
   }))
 
   // Transform payments into orders

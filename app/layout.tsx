@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { getServerSession } from "next-auth"
 import SessionProvider from "./components/session-provider"
 import SiteHeader from "./components/site-header"
+import { headers } from "next/headers"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -20,6 +21,9 @@ export default async function RootLayout({
   children: React.ReactNode
 }) {
   const session = await getServerSession()
+  const headersList = await headers()
+  const pathname = headersList.get("x-pathname") || "/"
+  const isDashboard = pathname.startsWith("/dashboard")
 
   return (
     <html lang="th" suppressHydrationWarning>
@@ -31,7 +35,7 @@ export default async function RootLayout({
           storageKey="fivem-scripts-theme"
         >
           <SessionProvider session={session}>
-            <SiteHeader />
+            {!isDashboard && <SiteHeader />}
             {children}
           </SessionProvider>
           <Toaster />

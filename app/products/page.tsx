@@ -23,58 +23,6 @@ export default async function ProductsPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-black">
-      <header className="sticky top-0 z-50 w-full border-b border-gray-800 bg-black/95 backdrop-blur supports-[backdrop-filter]:bg-black/60">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-6 md:gap-10">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="font-bold text-2xl bg-gradient-to-r from-blue-500 to-blue-700 bg-clip-text text-transparent">
-                FiveM Scripts
-              </div>
-            </Link>
-            <nav className="hidden md:flex gap-6">
-              <Link href="/" className="text-sm font-medium text-white transition-colors hover:text-blue-500">
-                หน้าหลัก
-              </Link>
-              <Link href="/products" className="text-sm font-medium text-blue-500 transition-colors hover:text-blue-500">
-                สินค้า
-              </Link>
-              <Link href="/dashboard" className="text-sm font-medium text-white transition-colors hover:text-blue-500">
-                แดชบอร์ด
-              </Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-4">
-            {session?.user ? (
-              <>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center bg-blue-900/30 px-3 py-1 rounded-full">
-                    <Wallet className="h-4 w-4 text-blue-400 mr-2" />
-                    <span className="text-blue-300 font-medium">{session.user.points || 0} พอยท์</span>
-                  </div>
-                  <Link href="/dashboard">
-                    <Button variant="outline" className="border-blue-600 text-white hover:bg-blue-900/50">
-                      <div className="flex items-center gap-2">
-                        <Image
-                          src={session.user.image || "/placeholder-user.jpg"}
-                          alt={session.user.name || "Profile"}
-                          width={24}
-                          height={24}
-                          className="rounded-full"
-                        />
-                        <span>{session.user.name}</span>
-                      </div>
-                    </Button>
-                  </Link>
-                </div>
-              </>
-            ) : (
-              <Link href="/login">
-                <Button className="bg-blue-600 text-white hover:bg-blue-700">เข้าสู่ระบบ</Button>
-              </Link>
-            )}
-          </div>
-        </div>
-      </header>
       <main className="flex-1 bg-gray-900">
         <div className="container py-8">
           <div className="flex flex-col items-center justify-center space-y-4 text-center mb-8">

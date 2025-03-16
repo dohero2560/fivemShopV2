@@ -19,6 +19,7 @@ interface Payment {
   status: string
   note?: string
   adminNote?: string
+  slipImage?: string
 }
 
 interface PaymentHistoryProps {
@@ -137,13 +138,20 @@ export default function PaymentHistory({ payments }: PaymentHistoryProps) {
                 <div className="bg-gray-900 p-4 rounded-md">
                   <p className="text-sm text-gray-400 mb-2">รูปภาพสลิปการโอนเงิน:</p>
                   <div className="flex justify-center bg-black p-2 rounded-md">
-                    <Image
-                      src="/placeholder.svg?height=300&width=200"
-                      alt="สลิปการโอนเงิน"
-                      width={200}
-                      height={300}
-                      className="object-contain max-h-[300px]"
-                    />
+                    {selectedPayment?.slipImage ? (
+                      <div className="relative w-full max-w-[200px] h-[300px]">
+                        <Image
+                          src={`data:image/jpeg;base64,${selectedPayment.slipImage}`}
+                          alt="สลิปการโอนเงิน"
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center p-4">
+                        <p className="text-gray-500">ไม่พบรูปภาพสลิป</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 

@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "../../auth/[...nextauth]/route"
 import clientPromise from "@/lib/mongodb"
 
-// GET /api/admin/users - Get all users
+// GET /api/admin/scripts - Get all scripts
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
@@ -19,19 +19,19 @@ export async function GET() {
     const client = await clientPromise
     const db = client.db()
     
-    const users = await db.collection("users")
+    const scripts = await db.collection("scripts")
       .find({})
       .sort({ createdAt: -1 })
       .toArray()
 
-    return NextResponse.json(users)
+    return NextResponse.json(scripts)
   } catch (error) {
-    console.error("[ADMIN_USERS_GET]", error)
+    console.error("[ADMIN_SCRIPTS_GET]", error)
     return new NextResponse("Internal error", { status: 500 })
   }
 }
 
-// POST /api/admin/users - Create new user
+// POST /api/admin/scripts - Create new script
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions)
@@ -45,33 +45,36 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json()
-    const { name, email, role = "USER", points = 0 } = body
+    const { 
+      title,
+      description,
+      price,
+      category,
+      downloadUrl,
+      imageUrl
+    } = body
 
-    if (!name || !email) {
+    if (!title || !description || !price || !category || !downloadUrl) {
       return new NextResponse("Missing required fields", { status: 400 })
     }
 
     const client = await clientPromise
     const db = client.db()
 
-    const existingUser = await db.collection("users").findOne({ email })
-    if (existingUser) {
-      return new NextResponse("User already exists", { status: 400 })
-    }
-
-    const user = await db.collection("users").insertOne({
-      name,
-      email,
-      role,
-      points,
+    const script = await db.collection("scripts").insertOne({
+      title,
+      description,
+      price,
+      category,
+      downloadUrl,
+      imageUrl,
       createdAt: new Date(),
       updatedAt: new Date(),
     })
 
-    return NextResponse.json(user)
+    return NextResponse.json(script)
   } catch (error) {
-    console.error("[ADMIN_USERS_POST]", error)
+    console.error("[ADMIN_SCRIPTS_POST]", error)
     return new NextResponse("Internal error", { status: 500 })
   }
-}
-
+} 

@@ -14,16 +14,17 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async session({ session, token }) {
+    async session({ session, token, user }) {
       if (session.user) {
-        session.user.id = token.sub as string
-
-        // Fetch user from database to get role and points
+        // Get fresh user data from database
         const client = await clientPromise
         const db = client.db()
-        const dbUser = await db.collection("users").findOne({ _id: new ObjectId(token.sub) })
+        const dbUser = await db.collection("users").findOne({ 
+          _id: new ObjectId(token.sub as string) 
+        })
 
         if (dbUser) {
+          session.user.id = dbUser._id.toString()
           session.user.role = dbUser.role
           session.user.points = dbUser.points
           session.user.discordId = dbUser.discordId
@@ -31,54 +32,80 @@ export const authOptions: NextAuthOptions = {
       }
       return session
     },
-    async jwt({ token, user, account }) { 
-      if (user) {
-        token.sub = user.id
-
-        // Always check and update user data when signing in
+    async jwt({ token, user, account, trigger }) {
+      if (trigger === "signIn" || trigger === "signUp" || !token.role) {
+        // Always get fresh data from database when signing in or if role is missing
         const client = await clientPromise
         const db = client.db()
         
-        // Check if user exists and has required fields
-        const existingUser = await db.collection("users").findOne({ _id: new ObjectId(user.id) })
+        const dbUser = await db.collection("users").findOne({ 
+          _id: new ObjectId(token.sub as string) 
+        })
         
-        if (!existingUser) {
-          // Create new user with default values
-          await db.collection("users").insertOne({
-            _id: new ObjectId(user.id),
-            name: user.name,
-            email: user.email,
-            image: user.image,
-            role: "USER",
-            points: 0,
-            discordId: account?.providerAccountId || null,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          })
-        } else if (!existingUser.role || !existingUser.points) {
-          // Update existing user with missing fields
-          await db.collection("users").updateOne(
-            { _id: new ObjectId(user.id) },
-            {
-              $set: {
-                role: existingUser.role || "USER",
-                points: existingUser.points || 0,
-                updatedAt: new Date()
-              }
-            }
-          )
-        }
-
-        // If this is a Discord sign in, update Discord ID
-        if (account?.provider === "discord" && account?.providerAccountId) {
-          await db.collection("users").updateOne(
-            { _id: new ObjectId(user.id) },
-            { $set: { discordId: account.providerAccountId } }
-          )
+        if (dbUser) {
+          token.role = dbUser.role
+          token.points = dbUser.points
+          token.discordId = dbUser.discordId
         }
       }
+
+      // If this is initial sign in
+      if (user && !token.role) {
+        const client = await clientPromise
+        const db = client.db()
+        
+        // Create new user with default values if doesn't exist
+        const newUser = {
+          _id: new ObjectId(user.id),
+          name: user.name,
+          email: user.email,
+          image: user.image,
+          role: "USER",
+          points: 0,
+          discordId: account?.providerAccountId || null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+
+        await db.collection("users").updateOne(
+          { _id: new ObjectId(user.id) },
+          { 
+            $setOnInsert: newUser,
+            $set: {
+              name: user.name,
+              email: user.email,
+              image: user.image,
+              updatedAt: new Date()
+            }
+          },
+          { upsert: true }
+        )
+
+        token.role = newUser.role
+        token.points = newUser.points
+        token.discordId = newUser.discordId
+      }
+
       return token
     },
+  },
+  events: {
+    async signIn({ user, account }) {
+      if (account?.provider === "discord" && account?.providerAccountId) {
+        const client = await clientPromise
+        const db = client.db()
+        
+        await db.collection("users").updateOne(
+          { _id: new ObjectId(user.id) },
+          { 
+            $set: { 
+              discordId: account.providerAccountId,
+              updatedAt: new Date()
+            } 
+          }
+        )
+      }
+    }
   },
   pages: {
     signIn: "/login",

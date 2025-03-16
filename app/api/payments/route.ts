@@ -13,10 +13,35 @@ export async function GET(request: NextRequest) {
     
     const payments = await db.collection("payments")
       .find({ userId: user.id })
+      .project({
+        _id: 1,
+        userId: 1,
+        amount: 1,
+        points: 1,
+        transactionId: 1,
+        note: 1,
+        adminNote: 1,
+        status: 1,
+        slipImage: 1,
+        createdAt: 1
+      })
       .sort({ createdAt: -1 })
       .toArray()
 
-    return NextResponse.json(payments)
+    // Format the response
+    const formattedPayments = payments.map(payment => ({
+      id: payment._id.toString(),
+      date: new Date(payment.createdAt).toLocaleString('th-TH'),
+      transactionId: payment.transactionId || '-',
+      amount: payment.amount,
+      points: payment.points,
+      status: payment.status,
+      note: payment.note,
+      adminNote: payment.adminNote,
+      slipImage: payment.slipImage
+    }))
+
+    return NextResponse.json(formattedPayments)
   } catch (error) {
     console.error("Error fetching payments:", error)
     return NextResponse.json({ error: "Failed to fetch payments" }, { status: 500 })
@@ -31,10 +56,16 @@ export async function POST(request: NextRequest) {
     
     const amount = Number(formData.get("amount"))
     const slipImage = formData.get("slipImage") as File
+    const transactionId = formData.get("transactionId") as string
+    const note = formData.get("note") as string
     
     if (!amount || !slipImage) {
       return NextResponse.json({ error: "กรุณากรอกข้อมูลให้ครบถ้วน" }, { status: 400 })
     }
+
+    // Convert slip image to base64
+    const imageBuffer = await slipImage.arrayBuffer()
+    const base64Image = Buffer.from(imageBuffer).toString('base64')
 
     // Calculate points (1 บาท = 1 พอยท์)
     const points = amount
@@ -46,17 +77,16 @@ export async function POST(request: NextRequest) {
     const payment = {
       userId: user.id,
       amount,
-      points, // ใช้จำนวนเงินเป็นจำนวนพอยท์โดยตรง
+      points,
+      transactionId,
+      note,
       status: "PENDING",
-      slipImage: "", // จะอัพเดทหลังจากอัพโหลดรูป
+      slipImage: base64Image,
       createdAt: new Date(),
       updatedAt: new Date()
     }
 
     const result = await db.collection("payments").insertOne(payment)
-    
-    // Upload slip image
-    // ... existing image upload code ...
 
     return NextResponse.json({
       success: true,

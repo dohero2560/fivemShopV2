@@ -4,7 +4,6 @@ import { authOptions } from "@/lib/auth/options"
 import clientPromise from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 
-// GET /api/admin/payments - Get all payments (admin only)
 export async function GET() {
   try {
     // Check authentication and authorization
@@ -21,12 +20,13 @@ export async function GET() {
     const client = await clientPromise
     const db = client.db()
 
-    // Fetch payments with user details
-    const payments = await db.collection("payments")
+    // Fetch purchases with user and script details
+    const purchases = await db.collection("purchases")
       .aggregate([
         {
           $addFields: {
-            userObjId: { $toObjectId: "$userId" }
+            userObjId: { $toObjectId: "$userId" },
+            scriptObjId: { $toObjectId: "$scriptId" }
           }
         },
         {
@@ -38,15 +38,23 @@ export async function GET() {
           }
         },
         {
+          $lookup: {
+            from: "scripts",
+            localField: "scriptObjId",
+            foreignField: "_id",
+            as: "script"
+          }
+        },
+        {
           $project: {
             _id: 1,
             userId: 1,
             userName: { $arrayElemAt: ["$user.name", 0] },
-            amount: 1,
-            method: 1,
+            scriptId: 1,
+            scriptTitle: { $arrayElemAt: ["$script.title", 0] },
+            price: 1,
             status: 1,
-            createdAt: 1,
-            slipImage: 1
+            createdAt: 1
           }
         },
         {
@@ -55,11 +63,10 @@ export async function GET() {
       ])
       .toArray()
 
-    return NextResponse.json(payments)
+    return NextResponse.json(purchases)
 
   } catch (error) {
-    console.error("Error in GET /api/admin/payments:", error)
+    console.error("Error in GET /api/admin/orders:", error)
     return new NextResponse("Internal Server Error", { status: 500 })
   }
-}
-
+} 
